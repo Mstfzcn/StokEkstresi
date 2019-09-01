@@ -1,0 +1,41 @@
+CREATE OR ALTER PROC SP_SearchStok
+( @Malkodu        NVARCHAR(20),
+  @BaslangicTarih DATETIME,
+  @BitisTarih     DATETIME)
+WITH ENCRYPTION
+AS
+CREATE TABLE #TempTable
+(
+	ID int,
+	IslemTur smallint,
+	EvrakNo varchar(16),
+	Tarih int,
+	MalKodu varchar(30),
+	Miktar numeric(25, 6),
+	Fiyat  numeric(25, 6),
+	Tutar numeric(25, 6),
+	Birim varchar(4),
+	Stok int
+)
+
+INSERT INTO #TempTable
+	   EXEC SP_StokListe @Malkodu, @BaslangicTarih, @BitisTarih
+
+ SELECT CASE WHEN IslemTur = 0 THEN 'Giriþ'
+		     WHEN IslemTur = 1 THEN 'Çýkýþ'
+	    END "IslemTur", 
+		 EvrakNo, 
+		 CONVERT(datetime, CONVERT(int, Tarih)) Tarih,
+		 CASE WHEN IslemTur = 0 THEN CAST(Miktar as int)
+		      WHEN IslemTur = 1 THEN CAST(0 as int)
+		 END "GirisMiktar",
+		 CASE WHEN IslemTur = 1 THEN CAST(Miktar as int)
+		      WHEN IslemTur = 0 THEN CAST(0 as int)
+		 END "CikisMiktar",
+	   	 Stok
+    FROM #TempTable
+ORDER BY CONVERT(datetime, CONVERT(int, Tarih))
+
+DELETE FROM #TempTable
+
+DROP TABLE #TempTable

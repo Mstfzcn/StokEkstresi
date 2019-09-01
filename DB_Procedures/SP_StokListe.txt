@@ -1,0 +1,53 @@
+CREATE OR ALTER PROC SP_StokListe
+( @Malkodu        NVARCHAR(20),
+  @BaslangicTarih DATETIME,
+  @BitisTarih     DATETIME)
+WITH ENCRYPTION
+AS
+DECLARE @Id as INT;
+DECLARE @Miktar as INT;
+DECLARE @Tur as NVARCHAR(5);
+DECLARE @stok as INT;
+DECLARE @query NVARCHAR(4000) = '';
+
+DECLARE @MyCursor as CURSOR;
+
+SET @stok = 0;
+
+SET @MyCursor = CURSOR FOR
+SELECT ID, Miktar, IslemTur
+ FROM STI
+WHERE Tarih BETWEEN @BaslangicTarih AND @BitisTarih AND 
+      MalKodu = @Malkodu
+ORDER BY Tarih, ID;
+ 
+OPEN @MyCursor;
+FETCH NEXT FROM @MyCursor INTO @Id, @Miktar, @Tur;
+ 
+WHILE @@FETCH_STATUS = 0
+BEGIN
+ IF (@Tur = 0) BEGIN SET @stok = @stok + @Miktar END
+ ELSE BEGIN SET @stok = @stok - @Miktar END;
+
+ SET @query = @query + 
+					  'SELECT s.*,' 
+							  + CONVERT(VARCHAR(12), @stok) + ' "Stok"
+					     FROM dbo.STI s
+						WHERE  s.ID = ' + CONVERT(VARCHAR(12), @Id) + '
+						UNION ';
+
+  FETCH NEXT FROM @MyCursor INTO @Id, @Miktar, @Tur;
+
+  IF @@FETCH_STATUS!=0
+  BEGIN
+	SET @query = @query + 
+						 'SELECT s.*,' 
+						         + CONVERT(VARCHAR(12), @stok) + ' "Stok"
+						    FROM dbo.STI s
+						   WHERE  s.ID = ' + CONVERT(VARCHAR(12), @Id);
+  END
+END
+ 
+CLOSE @MyCursor;
+DEALLOCATE @MyCursor;
+EXEC (@query);
