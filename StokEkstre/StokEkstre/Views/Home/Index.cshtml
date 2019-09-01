@@ -1,0 +1,75 @@
+﻿@{
+    Layout = null;
+}
+
+@using System.Data
+@using System.Linq
+
+@model DataSet
+@{
+    WebGrid webGrid = new WebGrid(source: (from p in Model.Tables[0].AsEnumerable()
+                                           select new
+                                           {
+                                               IslemTur = p.Field<string>("IslemTur"),
+                                               EvrakNo = p.Field<string>("EvrakNo"),
+                                               Tarih = p.Field<DateTime>("Tarih"),
+                                               GirisMiktar = p.Field<int>("GirisMiktar"),
+                                               CikisMiktar = p.Field<int>("CikisMiktar"),
+                                               Stok = p.Field<int>("Stok")
+                                           }));
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+</head>
+
+<body>
+    <center>
+            <h1>STOK EKSTRESİ</h1><br />
+            @using (@Html.BeginForm("Index", "Home"))
+            {
+                @Html.Label("Mal Kodu : ")
+                @Html.DropDownList("malkodu", new List<SelectListItem>
+                {
+                      new SelectListItem { Text = "NB MONOFAZE OTOMATLAR", Value = "10081 SİEMENS"},
+                      new SelectListItem { Text = "5SQ2160-2YA10 B 10A  OTOMATİK SİGORTA", Value = "10082 SİEMENS"},
+                      new SelectListItem { Text = "5SQ2160-2YA16 B 16A  OTOMATİK SİGORTA", Value = "10083 SİEMENS"},
+                      new SelectListItem { Text = "5SQ2160-2YA25 B 25A  OTOMATİK SİGORTA", Value = "10085 SİEMENS"},
+                      new SelectListItem { Text = "5SQ2160-2YA32 B 32A  OTOMATİK SİGORTA", Value = "10086 SİEMENS", Selected=true},
+                      new SelectListItem { Text = "5SQ2160-2YA40 B 40A  OTOMATİK SİGORTA", Value = "10087 SİEMENS"}
+                }, "Mal Adı Seçiniz")
+
+                <br /><br />
+                @Html.Label("Başlangıç Tarihi : ")
+                <input class="datefield" data-val="true" data-val-required="Date is required"
+                       id="baslangicTarihi" name="baslangicTarihi" type="date" value="2017-01-01" />
+
+                <br /><br />
+                @Html.Label("Bitiş Tarihi : ")
+                <input class="datefield" data-val="true" data-val-required="Date is required"
+                       id="bitisTarihi" name="bitisTarihi" type="date" value="2017-12-31" />
+                
+                <br /><br />
+
+                <input type="submit" value="Login" />
+
+                <br /><br />
+                @webGrid.GetHtml(
+                htmlAttributes: new { @id = "WebGrid", @class = "Grid" },
+                columns: webGrid.Columns(
+                            webGrid.Column(header: "Sıra No", format: item => item.WebGrid.Rows.IndexOf(item) + 1 + Math.Round(Convert.ToDouble(webGrid.TotalRowCount / webGrid.PageCount) / webGrid.RowsPerPage) * webGrid.RowsPerPage * webGrid.PageIndex),
+                            webGrid.Column("IslemTur", "İşlem Türü"),
+                            webGrid.Column("EvrakNo", "Evrak No"),
+                            webGrid.Column("Tarih", "Tarih"),
+                            webGrid.Column("GirisMiktar", "Giriş Miktarı"),
+                            webGrid.Column("CikisMiktar", "Çıkış Miktarı"),
+                            webGrid.Column("Stok", "Stok Miktarı")))
+
+            }
+</center>
+</body>
+</html>
